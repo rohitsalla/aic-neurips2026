@@ -1,0 +1,6 @@
+StackCube-v1 sample video
+Source: https://github.com/mani-skill/ManiSkill/blob/main/figures/environment_demos/StackCube-v1_rt.mp4
+Project: ManiSkill, https://github.com/mani-skill/ManiSkill
+License: Apache License 2.0 (see ManiSkill-LICENSE.txt)
+Modification: The 3.6-second sample was slowed with optical-flow interpolation to 20 seconds and resized to 720 x 720 pixels. Phase labels on this website are editorial annotations.
+This footage is an environment demonstration. It is not a fixed-depth or AIC policy rollout from the paper.

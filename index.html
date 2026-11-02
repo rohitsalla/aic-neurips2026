@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f7fc">
+  <meta name="description" content="Learning When to Think: Adaptive Internal Computation for Reinforcement Learning. Accepted at NeurIPS 2026. Paper and code coming soon.">
+  <title>Learning When to Think · Adaptive Internal Computation for RL</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="hero" id="top">
+    <div class="hero-inner">
+      <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Accepted at NeurIPS 2026 · Reinforcement learning</p>
+      <h1>Learning When to Think</h1>
+      <p class="subtitle">Adaptive Internal Computation for Reinforcement Learning</p>
+      <div class="authors" aria-label="Authors">
+        <a href="https://rohitsalla.github.io/" target="_blank" rel="noopener">Rohit Kumar Salla <span aria-hidden="true">↗</span></a><a href="https://simonstepputtis.com/" target="_blank" rel="noopener">Simon Stepputtis <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="affiliation">Virginia Tech</p>
+      <div class="hero-actions">
+        <span class="button coming-soon" aria-label="Paper coming soon">Paper <span>coming soon</span></span>
+        <span class="button coming-soon" aria-label="Code coming soon">Code <span>coming soon</span></span>
+      </div>
+      <div class="hero-concept">
+        <div class="concept-heading"><span>One policy, different depths</span><span class="concept-cap">Up to 8 steps</span></div>
+        <picture><source media="(prefers-reduced-motion: reduce)" srcset="assets/adaptive-depth-poster.png"><img class="concept-gif" src="assets/adaptive-depth-demo.gif" width="1000" height="340" alt="Animated conceptual example: a routine state acts after one refinement; a hard state continues to depth five before acting. These are illustrative paths, not measured policy depths."></picture>
+        <p>Conceptual illustration; the pictured depths are not measured policy outputs.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="study-facts" aria-label="Paper at a glance">
+    <div><strong>12</strong><span>benchmark tasks</span></div>
+    <div><strong>5</strong><span>policy families in the transfer study</span></div>
+    <div><strong>8</strong><span>maximum refinements in the main setup</span></div>
+  </div>
+
+  <main id="main">
+    <nav class="contents" aria-label="On this page">
+      <a href="#motivation">Motivation</a><a href="#method">Method</a><a href="#results">Results</a><a href="#allocation">What drives the gains?</a><a href="#theory">Theory</a><a href="#limitations">Limitations</a>
+    </nav>
+
+    <section class="section intro" id="motivation">
+      <p class="section-kicker">01 / Motivation</p>
+      <h2>Give each decision the computation it needs.</h2>
+      <p class="lead">Iterative policies can refine a state representation before acting. A fixed-depth policy spends the same number of refinements on every state, even when some decisions are routine and others need more thought.</p>
+      <p>Adaptive Internal Computation (AIC) learns a stopping decision alongside the action. It can stop early or continue refining within a capped budget, then executes one action in the environment. The paper asks when this state-dependent allocation helps, and separates its effect from other changes in training.</p>
+      <div class="takeaway"><span class="takeaway-label">Core idea</span><strong>Learn <em>where</em> to spend internal computation, not just <em>how much</em> to allow.</strong></div>
+    </section>
+
+    <section class="section" id="method">
+      <p class="section-kicker">02 / Method</p>
+      <h2>One policy learns to act and stop.</h2>
+      <p>An encoder produces a latent state. A shared residual block refines it repeatedly. At each depth, action and value heads read the representation, while a halting head decides whether to continue. Stopping at the maximum depth is forced.</p>
+      <figure class="paper-figure architecture">
+        <a href="assets/aic-architecture.png" target="_blank" rel="noopener" aria-label="Open the AIC architecture figure at full size"><img src="assets/aic-architecture.png" width="1192" height="424" alt="Figure 1 from the camera-ready manuscript: a state encoder feeds a shared refinement block, with action and value heads at each depth, learned halting heads, and a forced stop at the maximum depth." loading="lazy"></a>
+        <figcaption>Updated Figure 1 from the camera-ready manuscript. The main configuration caps refinement at eight steps. <a href="assets/aic-architecture.png" target="_blank" rel="noopener">View full size ↗</a></figcaption>
+      </figure>
+      <div class="method-grid">
+        <article><span class="method-number">1</span><h3>Refine</h3><p>Reuse one residual block to improve the representation without adding a new block of parameters at every depth.</p></article>
+        <article><span class="method-number">2</span><h3>Decide</h3><p>Sample a stopping depth and an action as a joint policy, so PPO can assign credit to both choices.</p></article>
+        <article><span class="method-number">3</span><h3>Budget</h3><p>Penalize expected depth and supervise value predictions at every depth with a shared rollout target.</p></article>
+      </div>
+      <p class="fine-print">Intermediate value differences are diagnostics, not labels for the best stopping depth or counterfactual gains.</p>
+    </section>
+
+    <section class="section" id="results">
+      <p class="section-kicker">03 / Experimental results</p>
+      <h2>Performance depends on the task and the budget.</h2>
+      <p>The twelve-task benchmark spans control, manipulation, navigation, language, gridworld, and rare events. At the reported eight-step nominal cap, AIC has higher mean reward than the listed fixed comparator on nine tasks, ties on one, and is lower on two. These are operating-point comparisons; realized computation is not matched by the cap alone.</p>
+      <div class="environment-interactive" id="environment-interactive" aria-labelledby="environment-title">
+        <div class="environment-intro">
+          <span class="demo-label">Three interactive simulator runs</span>
+          <h3 id="environment-title">Watch the task. Compare the policies.</h3>
+          <p>Choose DoorKey, Memory, or StackCube. Each 20-second video illustrates a research environment; the graph below displays fixed-policy and AIC reward means reported in the paper.</p>
+        </div>
+        <div class="environment-content">
+          <div class="environment-switcher" role="group" aria-label="Choose an environment">
+            <button type="button" class="selected" data-env="doorkey" aria-pressed="true"><strong>DoorKey</strong><span>Key → door → goal</span></button>
+            <button type="button" data-env="memory" aria-pressed="false"><strong>Memory</strong><span>Cue → hallway → match</span></button>
+            <button type="button" data-env="stackcube" aria-pressed="false"><strong>StackCube</strong><span>Reach → grasp → stack</span></button>
+          </div>
+          <div class="environment-player">
+            <div class="video-frame">
+              <video id="environment-video" muted playsinline preload="metadata" poster="assets/doorkey-poster.jpg" aria-label="Twenty-second scripted MiniGrid DoorKey run.">
+                <source src="assets/doorkey-20s.mp4" type="video/mp4">
+                Your browser cannot play this video.
+              </video>
+              <span class="video-phase" id="video-phase" hidden aria-hidden="true"></span>
+            </div>
+            <div class="play-controls"><button type="button" id="video-toggle" aria-label="Play environment video">▶ Play</button><span id="video-status">DoorKey · 0:00 / 0:20</span></div>
+            <p class="environment-source"><span id="environment-caption">Find a key, unlock a door, and reach the goal.</span> <a id="environment-docs" href="https://minigrid.farama.org/main/environments/minigrid/DoorKeyEnv/" target="_blank" rel="noopener">About this environment ↗</a> · <a id="environment-license" href="assets/MiniGrid-LICENSE.txt" target="_blank" rel="noopener">License</a></p>
+          </div>
+          <div class="graph-panel" aria-label="Reported fixed-policy and AIC reward means for three environments">
+            <div class="graph-heading"><div><span class="demo-label">Interactive reward graph</span><h4>Fixed policy vs. AIC</h4></div><div class="graph-legend"><span><i class="fixed"></i>Fixed</span><span><i class="aic"></i>AIC</span></div></div>
+            <div class="graph-axis" aria-hidden="true"><span>0</span><span>Mean reward · 0–1 scale</span><span>1</span></div>
+            <div class="graph-list">
+              <button type="button" class="graph-row selected" data-chart-env="doorkey" aria-pressed="true" aria-label="DoorKey: Fixed 0.5259, AIC 0.5470. Select DoorKey video.">
+                <span class="graph-row-top"><strong>DoorKey</strong><small>AIC +0.0211 · Table 14</small></span>
+                <span class="graph-bar"><em>Fixed</em><span class="graph-track"><i class="fixed" style="width:52.59%"></i></span><b>0.5259</b></span>
+                <span class="graph-bar"><em>AIC</em><span class="graph-track"><i class="aic" style="width:54.70%"></i></span><b>0.5470</b></span>
+              </button>
+              <button type="button" class="graph-row" data-chart-env="memory" aria-pressed="false" aria-label="Memory: Fixed 0.5504, AIC 0.5715. Select Memory video.">
+                <span class="graph-row-top"><strong>Memory</strong><small>AIC +0.0211 · Table 14</small></span>
+                <span class="graph-bar"><em>Fixed</em><span class="graph-track"><i class="fixed" style="width:55.04%"></i></span><b>0.5504</b></span>
+                <span class="graph-bar"><em>AIC</em><span class="graph-track"><i class="aic" style="width:57.15%"></i></span><b>0.5715</b></span>
+              </button>
+              <button type="button" class="graph-row" data-chart-env="stackcube" aria-pressed="false" aria-label="StackCube: Fixed 0.4458, AIC 0.4579. Select StackCube video.">
+                <span class="graph-row-top"><strong>StackCube</strong><small>AIC +0.0121 · Table 1</small></span>
+                <span class="graph-bar"><em>Fixed</em><span class="graph-track"><i class="fixed" style="width:44.58%"></i></span><b>0.4458</b></span>
+                <span class="graph-bar"><em>AIC</em><span class="graph-track"><i class="aic" style="width:45.79%"></i></span><b>0.4579</b></span>
+              </button>
+            </div>
+            <p class="graph-summary" id="graph-summary">DoorKey: AIC has higher mean reward (+0.0211) and uses 3.36 refinements on average versus 8 for Fixed-8.</p>
+            <p class="environment-note">Values are results from the manuscript, not live telemetry from these videos. DoorKey and Memory come from the supplementary memory study; StackCube is from the main benchmark. The MiniGrid videos show scripted routes with full-map views. StackCube uses <a href="https://github.com/mani-skill/ManiSkill/blob/main/mani_skill/envs/tasks/tabletop/stack_cube.py" target="_blank" rel="noopener">ManiSkill's official sample</a>, slowed from 3.6 to 20 seconds; its demonstrator is unspecified (<a href="assets/ManiSkill-VIDEO-NOTICE.txt" target="_blank" rel="noopener">video credit</a>). None are fixed-policy or AIC rollouts.</p>
+          </div>
+        </div>
+      </div>
+      <figure class="paper-figure results-figure">
+        <a href="assets/benchmark-budgets.png" target="_blank" rel="noopener" aria-label="Open the benchmark plots at full size"><img src="assets/benchmark-budgets.png" width="790" height="450" alt="Six plots compare AIC and fixed-depth reward across nominal budgets 1, 2, 4 and 8 for PickCube, StackCube, AntMaze, RareEvent, FourRooms and Puzzle." loading="lazy"></a>
+        <figcaption>Figure 2 of the camera-ready paper: five-seed means with ±1 standard deviation bands across six benchmark tasks. <a href="assets/benchmark-budgets.png" target="_blank" rel="noopener">View full size ↗</a></figcaption>
+      </figure>
+      <div class="result-highlights">
+        <article><span class="result-value">+0.0185</span><h3>PickCube</h3><p>AIC minus the listed fixed comparator at nominal B = 8.</p></article>
+        <article><span class="result-value">+0.0191</span><h3>AntMaze</h3><p>AIC minus the listed fixed comparator at nominal B = 8.</p></article>
+        <article><span class="result-value negative">−0.0216</span><h3>FourRooms</h3><p>A default-setting loss at nominal B = 8.</p></article>
+      </div>
+      <p class="fine-print">The RareEvent gain at B = 8 is primarily attributed to per-depth value supervision in the factorial study, rather than selective allocation. Puzzle also loses at the default B = 8 setting.</p>
+    </section>
+
+    <section class="section" id="allocation">
+      <p class="section-kicker">04 / Mechanism</p>
+      <h2>What actually drives the gains?</h2>
+      <p>A higher return can come from adaptive allocation, intermediate supervision, extra capacity, uniformly useful refinement, or different training data. The paper tests these explanations with targeted early exits, a yoked data study, and an allocation-by-supervision factorial.</p>
+      <div class="evidence-grid">
+        <article class="evidence"><span class="evidence-tag">Intervention</span><h3>Truncate selected states</h3><p>Forcing high-depth states to stop at depth one often hurts more than truncating a count-matched random set. This indicates sensitivity to chosen refinements, though the amount of compute removed is not matched.</p></article>
+        <article class="evidence"><span class="evidence-tag">Factorial</span><h3>Separate allocation and supervision</h3><p>PickCube and AntMaze show allocation-dominant gains. StackCube has mixed effects. RareEvent is supervision-dominant.</p></article>
+      </div>
+      <div class="table-wrap" role="region" aria-label="Allocation and supervision ablation table" tabindex="0">
+        <table>
+          <caption>Adaptive stopping and supervision factorial · reward means from Table 5</caption>
+          <thead><tr><th scope="col">Task</th><th scope="col">Neither</th><th scope="col">Supervision only</th><th scope="col">Allocation only</th><th scope="col">Full AIC</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">PickCube</th><td>.421</td><td>.434</td><td>.472</td><td>.488</td></tr>
+            <tr><th scope="row">AntMaze</th><td>.451</td><td>.458</td><td>.505</td><td>.518</td></tr>
+            <tr><th scope="row">StackCube</th><td>.394</td><td>.413</td><td>.441</td><td>.455</td></tr>
+            <tr><th scope="row">RareEvent</th><td>.558</td><td>.589</td><td>.560</td><td>.591</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="fine-print">These factorial means have no seed-level intervals and should be interpreted within this study, not substituted into the main benchmark.</p>
+    </section>
+
+    <section class="section theory" id="theory">
+      <p class="section-kicker">05 / Theory</p>
+      <h2>Why adapt depth at all?</h2>
+      <p>Under explicit assumptions, the paper shows an allocation advantage at equal expected depth. If easy states are already solved at depth one and a small fraction of hard states need depth <em>K</em>, an ideal state-dependent allocator can reserve depth <em>K</em> for hard states. Any state-independent stopping schedule at the same expected budget retains a positive expected shortfall.</p>
+      <div class="theorem"><span>Theorem 1 · intuition</span><p>Spend one step on easy states. Save the deeper computation for hard states.</p></div>
+      <p class="fine-print">This establishes an opportunity for allocation under the theorem’s value-profile assumptions. It does not guarantee that AIC learns the ideal stopping rule.</p>
+    </section>
+
+    <section class="section" id="limitations">
+      <p class="section-kicker">06 / Limitations and open questions</p>
+      <h2>Better allocation remains difficult.</h2>
+      <ul class="limitations-list">
+        <li><strong>Predicting useful refinement:</strong> a privileged-reference gap and supplementary probes suggest the policy does not capture all available allocation headroom.</li>
+        <li><strong>Failure cases:</strong> FourRooms remains below a mean-depth-matched fixed comparator across the reported settings; Puzzle is sensitive to value-supervision weight.</li>
+        <li><strong>Real cost:</strong> fewer refinements do not translate directly to latency. On GPT-2/RTE, 49% fewer refinements yield 7.8% lower latency; all-depth value supervision also increases matched training time to 1.22× Fixed-8.</li>
+        <li><strong>Scope:</strong> reward scale affects the compute penalty, and large-model and real-robot validation remain open.</li>
+      </ul>
+    </section>
+
+  </main>
+  <footer><span>Learning When to Think · Virginia Tech</span><a href="#top">Back to top ↑</a></footer>
+  <script src="script.js"></script>
+</body>
+</html>
